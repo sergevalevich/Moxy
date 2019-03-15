@@ -2,6 +2,7 @@ package com.arellomobile.mvp.compiler;
 
 import com.arellomobile.mvp.GenerateViewState;
 import com.arellomobile.mvp.InjectViewState;
+import com.arellomobile.mvp.RegisterMoxyReflectorDelegate;
 import com.arellomobile.mvp.compiler.presenterbinder.InjectPresenterProcessor;
 import com.arellomobile.mvp.compiler.presenterbinder.PresenterBinderClassGenerator;
 import com.arellomobile.mvp.compiler.reflector.MoxyReflectorGenerator;
@@ -80,6 +81,7 @@ public class MvpCompiler extends AbstractProcessor {
 		Collections.addAll(supportedAnnotationTypes,
 				InjectPresenter.class.getCanonicalName(),
 				InjectViewState.class.getCanonicalName(),
+				RegisterMoxyReflectorDelegate.class.getCanonicalName(),
 				GenerateViewState.class.getCanonicalName());
 		return supportedAnnotationTypes;
 	}
@@ -142,16 +144,21 @@ public class MvpCompiler extends AbstractProcessor {
 		return true;
 	}
 
-	/**
-	 * @return first package associated with this module.
-	 * Probably should return module's top-level package
-	 */
 	private String getMoxyReflectorDelegatePackage(
 	        final RoundEnvironment roundEnv
     ) {
+        final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(RegisterMoxyReflectorDelegate.class);
+
+        if (elements.isEmpty()) {
+            getMessager().printMessage(
+                    Diagnostic.Kind.ERROR,
+                    "Cannot find any class annotated with " + RegisterMoxyReflectorDelegate.class.getSimpleName() + " in this module"
+            );
+        }
+
 		return processingEnv
 				.getElementUtils()
-				.getPackageOf(roundEnv.getElementsAnnotatedWith(InjectPresenter.class).iterator().next())
+				.getPackageOf(elements.iterator().next())
 				.getQualifiedName()
 				.toString();
     }
